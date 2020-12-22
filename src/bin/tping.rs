@@ -1,8 +1,10 @@
+use std::io;
 use std::net::{TcpStream, ToSocketAddrs, SocketAddr};
 use std::time::{Duration, Instant};
 use structopt::StructOpt;
 
 use tping::utils;
+
 
 // CLI arguments settings
 #[derive(StructOpt)]
@@ -19,20 +21,17 @@ struct Cli {
     wait: u64,
 }
 
-fn get_server(host: &str, port: &u32) -> SocketAddr {
+fn get_server(host: &str, port: &u32) -> Result<SocketAddr, io::Error> {
     let conn_string: String = format!("{}:{}", host, port);
 
     match conn_string.to_socket_addrs() {
         Ok(mut addr) => {
             match addr.next() {
-                Some(s) => return s,
-                None => panic!("Not a valid socket addr"), // Not a SocketAddr
+                Some(s) =>  Ok(s),
+                None => return Err(io::Error::new(io::ErrorKind::Other, "Not a socket addr"))
             }
         },
-        Err(e) => {
-            eprintln!("error: {}:{} ({})", host, port, e);
-            std::process::exit(1);
-        }
+        Err(e) => return Err(e),
     }
 }
 
@@ -56,7 +55,13 @@ fn main() {
 
     let mut latency_measurements: Vec<f32> = Vec::new();
 
-    let server = get_server(&host, &port);
+    let server = match get_server(&host, &port) {
+        Ok(s) => s,
+        Err(e) => {
+            eprintln!("error: {}:{} ({})", host, port, e);
+            std::process::exit(1);
+        }
+    };
 
     for r in 0..*reps {
         std::thread::sleep(Duration::new(*wait, 0));

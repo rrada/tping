@@ -1,4 +1,4 @@
-![Rust](https://github.com/rrada/tping/workflows/Rust/badge.svg?branch=main)
+![Build](https://github.com/rrada/tping/workflows/Build/badge.svg?branch=main)
 # tping
 
 ## About
